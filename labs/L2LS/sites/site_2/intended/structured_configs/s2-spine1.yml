@@ -1,0 +1,179 @@
+hostname: s2-spine1
+is_deployed: true
+static_routes:
+- vrf: default
+  destination_address_prefix: 0.0.0.0/0
+  gateway: 192.168.0.1
+service_routing_protocols_model: multi-agent
+ip_routing: true
+vlan_internal_order:
+  allocation: ascending
+  range:
+    beginning: 1006
+    ending: 1199
+spanning_tree:
+  mode: mstp
+  mst_instances:
+  - id: '0'
+    priority: 4096
+  no_spanning_tree_vlan: 4093-4094
+local_users:
+- name: arista
+  privilege: 15
+  role: network-admin
+  sha512_password: $6$arista$KFBxuZ94fuJ7R0d5UOpgO0VkLfQ0kscZ/xgPeqMsT3k4vT6Tz73s3zSRfmkadHv/NIYKs8ZYWIBvWbDjV6erc/
+  ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCoQeh5L3OFWbPzt4oRORup2tVw4PYLYmGEtqct8H/DSt75ccxde8aP/DSXMbtfXevpDx5TyYl18EegYFUN3Sq/6hbkrKMQO6YgqaERTS2BvQmk5X5SCCl0pn6egBNb3kWczgowpyLigjQjjmVMpirrz9SSbVq35YZxVeEqWDlWiY57lXg5cVmeTe3D3jqBAZMfTosksXroNPUbdzThm5BwfziiDSCaGczWffPezfbG5H1MtzG6WSCCItLRcKBnC5au4PCD9cy46OFvEYaHEZgwMZd4+RbRatHrYM5buAyHjiZkzY16tdpL/dIMzwlSrrHFqEpGywDn1poZ/ZjA5u8H
+    arista@ps-avd-9-32d5cd42-eos
+vrfs:
+- name: default
+  ip_routing: false
+management_interfaces:
+- name: Management0
+  description: oob_management
+  shutdown: false
+  vrf: default
+  ip_address: 192.168.0.20/24
+  gateway: 192.168.0.1
+  type: oob
+management_api_http:
+  enable_vrfs:
+  - name: default
+  enable_https: true
+vlans:
+- id: 4093
+  tenant: system
+  name: LEAF_PEER_L3
+  trunk_groups:
+  - LEAF_PEER_L3
+- id: 4094
+  tenant: system
+  name: MLAG_PEER
+  trunk_groups:
+  - MLAG
+vlan_interfaces:
+- name: Vlan4093
+  description: MLAG_PEER_L3_PEERING
+  shutdown: false
+  mtu: 1500
+  ip_address: 10.2.253.2/31
+  ospf_network_point_to_point: true
+  ospf_area: 0.0.0.0
+- name: Vlan4094
+  description: MLAG_PEER
+  shutdown: false
+  no_autostate: true
+  mtu: 1500
+  ip_address: 10.2.253.0/31
+port_channel_interfaces:
+- name: Port-Channel1
+  description: MLAG_PEER_s2-spine2_Po1
+  type: switched
+  shutdown: false
+  mode: trunk
+  trunk_groups:
+  - LEAF_PEER_L3
+  - MLAG
+- name: Port-Channel2
+  description: RACK1_Po2
+  type: switched
+  shutdown: false
+  mode: trunk
+  vlans: none
+  mlag: 2
+- name: Port-Channel4
+  description: RACK2_Po2
+  type: switched
+  shutdown: false
+  mode: trunk
+  vlans: none
+  mlag: 4
+ethernet_interfaces:
+- name: Ethernet1
+  peer: s2-spine2
+  peer_interface: Ethernet1
+  peer_type: mlag_peer
+  description: MLAG_PEER_s2-spine2_Ethernet1
+  type: port-channel-member
+  shutdown: false
+  channel_group:
+    id: 1
+    mode: active
+- name: Ethernet6
+  peer: s2-spine2
+  peer_interface: Ethernet6
+  peer_type: mlag_peer
+  description: MLAG_PEER_s2-spine2_Ethernet6
+  type: port-channel-member
+  shutdown: false
+  channel_group:
+    id: 1
+    mode: active
+- name: Ethernet2
+  peer: s2-leaf1
+  peer_interface: Ethernet2
+  peer_type: leaf
+  description: S2-LEAF1_Ethernet2
+  shutdown: false
+  type: port-channel-member
+  channel_group:
+    id: 2
+    mode: active
+- name: Ethernet3
+  peer: s2-leaf2
+  peer_interface: Ethernet2
+  peer_type: leaf
+  description: S2-LEAF2_Ethernet2
+  shutdown: false
+  type: port-channel-member
+  channel_group:
+    id: 2
+    mode: active
+- name: Ethernet4
+  peer: s2-leaf3
+  peer_interface: Ethernet2
+  peer_type: leaf
+  description: S2-LEAF3_Ethernet2
+  shutdown: false
+  type: port-channel-member
+  channel_group:
+    id: 4
+    mode: active
+- name: Ethernet5
+  peer: s2-leaf4
+  peer_interface: Ethernet2
+  peer_type: leaf
+  description: S2-LEAF4_Ethernet2
+  shutdown: false
+  type: port-channel-member
+  channel_group:
+    id: 4
+    mode: active
+mlag_configuration:
+  domain_id: SPINES
+  local_interface: Vlan4094
+  peer_address: 10.2.253.1
+  peer_link: Port-Channel1
+  reload_delay_mlag: '300'
+  reload_delay_non_mlag: '330'
+loopback_interfaces:
+- name: Loopback0
+  description: Router_ID
+  shutdown: false
+  ip_address: 10.2.252.1/32
+  ospf_area: 0.0.0.0
+router_ospf:
+  process_ids:
+  - id: 100
+    passive_interface_default: true
+    router_id: 10.2.252.1
+    max_lsa: 12000
+    no_passive_interfaces:
+    - Vlan4093
+    bfd_enable: false
+    redistribute:
+      connected: {}
+ip_igmp_snooping:
+  globally_enabled: true
+ip_virtual_router_mac_address: 00:1c:73:00:dc:01
+metadata:
+  platform: cEOS
